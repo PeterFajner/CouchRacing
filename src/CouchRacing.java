@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Point2D;
+import java.util.*;
 
 /**
  * Created by Peter on 2015-06-01.
@@ -11,72 +12,17 @@ public class CouchRacing {
         Game game = new Game();
         game.gameLoop();
     }
-
-
-}
-
-class Vector2
-{
-    public double x;
-    public double y;
-
-    public Vector2(double x, double y)
-    {
-        this.x = x;
-        this.y = y;
-    }
-
-    public void add(Vector2 other)
-    {
-        this.x += other.x;
-        this.y += other.y;
-    }
-
-    public String toString()
-    {
-        return "["+x+","+y+"]";
-    }
-}
-
-class Couch
-{
-    public Point2D pos;
-    public double angle; // angle counterclockwise from right horizontal, in radians
-    public double mass;
-    Vector2 totalForce;
-    Vector2 velocity;
-
-    public Couch()
-    {
-        this.pos = new Point2D.Double(10, 10);
-        this.angle = 0;
-        this.totalForce = new Vector2(0, 0);
-        this.velocity = new Vector2(0,0);
-        this.mass = 0.00001;
-    }
-
-    public void applyForce(Vector2 force)
-    {
-        this.totalForce.add(force);
-    }
-
-    public void update()
-    {
-        // update velocity
-        // multiply the accumulated force by the mass, and add it to the velocity
-        Vector2 addedVelocity = Vector2Tools.multiply(this.totalForce, this.mass);
-        this.velocity = Vector2Tools.add(this.velocity, addedVelocity);
-
-        // update position
-        this.pos.setLocation(this.velocity.x + this.pos.getX(), this.velocity.y + this.pos.getY());
-    }
-
 }
 
 class Game extends JPanel
 {
     JFrame frame;
     Couch couch;
+	
+	final int[] SCREENSIZE = new int[]{1200, 800};
+	final int GROUNDLEVEL = 500;
+	
+	ArrayList<Cloud> clouds = new ArrayList<Cloud>();
 
     JFrame createFrame(int width, int height)
     {
@@ -90,27 +36,41 @@ class Game extends JPanel
 
     public Game()
     {
-        this.frame = createFrame(1200, 800);
-        couch = new Couch();
+        this.frame = createFrame(SCREENSIZE[0], SCREENSIZE[1]);
+        couch = new Couch(new Point2D.Double(0, 0));
     }
-
+	
+	public Cloud createCloud(int[] xSpread, int[] ySpread)
+	{
+		Random r = new Random();
+		int x = r.nextInt(xSpread[1] - xSpread[0]) + xSpread[0];
+		int y = r.nextInt(ySpread[1] - ySpread[0]) + ySpread[0];
+		return new Cloud(new Point2D.Double(x, y));
+	}
+	
     public void gameLoop() {
-        applyInitialForce();
+        couch.applyForce(new Vector2(100, -500)); // apply initial slingshot force; initially hardcoded
+		// create some clouds
+		for (int i = 0; i < 250; i++) {
+			Cloud cloud = createCloud(new int[]{-3000, 3000}, new int[]{-1000, 1000});
+			clouds.add(cloud);
+		}
         try {
             while (true) {
-                this.update();
+                couch.applyForce(new Vector2(0, 3)); // gravity
+				couch.update();
+				System.out.println(couch.pos);
                 this.repaint();
                 Thread.sleep(10);
+				if (couch.pos.getY() > GROUNDLEVEL) {
+					break;
+				}
             }
         }
+		// why do I need to do this
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-    }
-
-    void applyInitialForce()
-    {
-        couch.applyForce(new Vector2(10, -10));
     }
 
     public void paint(Graphics g) {
@@ -118,14 +78,10 @@ class Game extends JPanel
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                 RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.fillOval(frame.getWidth()/2, frame.getHeight()/2, 30, 30);
+        g2d.fillRect(frame.getWidth()/2, frame.getHeight()/2, 30, 30); // render couch in middle of screen
+		for (Cloud cloud : clouds) {
+			g2d.fillOval((int)(frame.getWidth()/2 + cloud.pos.getX() - couch.pos.getX()), (int)(frame.getHeight()/2 + cloud.pos.getY() - couch.pos.getY()), 40, 20);
+		}
         // for object in objectList, render object with offset to couch
-    }
-
-    public void update()
-    {
-        couch.applyForce(new Vector2(0, 1));
-        couch.update();
-        System.out.println(couch.pos);
     }
 }
