@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.util.*;
+import java.awt.image.BufferedImage;
 
 public class Couch
 {
@@ -10,6 +11,7 @@ public class Couch
     public double mass;
     Vector2 totalForce;
     Vector2 velocity;
+	BufferedImage image = null;
 
     public Couch(Point2D pos)
     {
@@ -20,8 +22,14 @@ public class Couch
         this.mass = 100;
     }
 	
-	public Couch() {
+	public Couch()
+	{
 		this(new Point2D.Double(10, 10));
+	}
+	
+	public void setImage(BufferedImage image)
+	{
+		this.image = image;
 	}
 
     public void applyForce(Vector2 force)
