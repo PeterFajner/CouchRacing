@@ -24,7 +24,7 @@ class Game extends JPanel
 	
 	final int[] SCREENSIZE = new int[]{1200, 800};
 	final int GROUNDLEVEL = 500;
-	final String res = "../res/";
+	final String res = "../resources/";
 	
 	ArrayList<Cloud> clouds = new ArrayList<Cloud>();
 
@@ -46,10 +46,13 @@ class Game extends JPanel
 		// set an image for the couch
 		BufferedImage couchImage;
 		try {
-			couchImage = ImageIO.read(new File("../res/leathersofa.png"));
+			//couchImage = ImageIO.read(new File("../res/leathersofa.png"));
+            couchImage = ImageIO.read(getClass().getResource("leathersofa.png"));
 			couch.setImage(couchImage);
+			//System.out.println(couch.image);
 		} catch (IOException e) {
-			System.out.println("How can the couch be real if its image isn't real?");
+			//System.out.println("How can the couch be real if its image isn't real?");
+            e.printStackTrace();
 		}
     }
 	
@@ -64,28 +67,28 @@ class Game extends JPanel
     public void gameLoop() {
         couch.applyForce(new Vector2(100, -500)); // apply initial slingshot force; initially hardcoded
 		// create some clouds
-		//String[] cloudImages = new String[]{"cloud1.png", "cloud2.gif", "cloud3.gif", "cloud4.gif"};
-		String[] cloudImages = new String[]{"leathersofa.png"};
-		for (int i = 0; i < 250; i++) {
-			String imageChoice = cloudImages[new Random().nextInt(cloudImages.length)];
-			BufferedImage image = null;
-			try {
-				ImageIO.read(new File(res + imageChoice));
-			} catch (IOException e) {
-				System.out.println("How can clouds be real if their textures aren't real?");
-			}
-			Cloud cloud = createCloud(new int[]{-3000, 3000}, new int[]{-1000, 1000}, image);
+		BufferedImage cloudImage = null;
+		try {
+			cloudImage = ImageIO.read(getClass().getResource("clouds3.png"));
+		} catch (IOException e) {
+			//System.out.println("How can clouds be real if their textures aren't real?");
+			e.printStackTrace();
+		}
+		for (int i = 0; i < 25; i++) {
+			Cloud cloud = createCloud(new int[]{-3000, 3000}, new int[]{-1000, 1000}, cloudImage);
 			clouds.add(cloud);
 		}
 		
 		// main loop
         try {
             while (true) {
-                couch.applyForce(new Vector2(0, 3)); // gravity
+                couch.applyForce(new Vector2(0, 3)); // apply gravity
 				couch.update();
 				System.out.println(couch.pos);
                 this.repaint();
                 Thread.sleep(10);
+
+				// check if couch hit the ground
 				if (couch.pos.getY() > GROUNDLEVEL) {
 					break;
 				}
@@ -107,20 +110,42 @@ class Game extends JPanel
 		int xPos = frame.getWidth()/2;
 		int yPos = frame.getHeight()/2;
 		double scale = 0.1;
-		int width = (int)(couch.image.getWidth() * scale);
-		int height = (int)(couch.image.getHeight() * scale);
-		if (couch.image != null) {
-			g2d.drawImage(couch.image, xPos, yPos, width, height,  null);
-		} else {
+
+		//System.out.println(couch.image);
+
+		int width = 0;
+		int height = 0;
+
+		try {
+			width = (int) (couch.image.getWidth(null) * scale);
+			height = (int) (couch.image.getHeight(null) * scale);
+			g2d.drawImage(couch.image, xPos, yPos, width, height, null);
+		} catch (NullPointerException e) {
+			System.out.println("Couch image not found!");
 			g2d.fillRect(xPos, yPos, 30, 30);
 		}
-		
+
+		System.out.println("Round done");
+
 		for (Cloud cloud : clouds) {
+			int cloudxPos = (int)(frame.getWidth()/2 + cloud.pos.getX() - couch.pos.getX());
+			int cloudyPos = (int)(frame.getHeight()/2 + cloud.pos.getY() - couch.pos.getY());
+			double cloudScale = 0.3;
+			int cloudWidth = (int) (cloud.image.getWidth(null) * cloudScale);
+			int cloudHeight = (int) (cloud.image.getHeight(null) * cloudScale);
+			try {
+				g2d.drawImage(cloud.image, cloudxPos, cloudyPos, cloudWidth, cloudHeight, null);
+			} catch (NullPointerException e) {
+				g2d.fillOval(cloudxPos, cloudyPos, 40, 20);
+			}
+		}
+
+		/*for (Cloud cloud : clouds) {
 			//g2d.fillOval((int)(frame.getWidth()/2 + cloud.pos.getX() - couch.pos.getX()), (int)(frame.getHeight()/2 + cloud.pos.getY() - couch.pos.getY()), 40, 20);
 			int cloudxPos = (int)(frame.getWidth()/2 + cloud.pos.getX() - couch.pos.getX());
 			int cloudyPos = (int)(frame.getHeight()/2 + cloud.pos.getY() - couch.pos.getY());
 			g2d.drawImage(cloud.image, cloudxPos, cloudyPos, null);
-		}
+		}*/
         // for object in objectList, render object with offset to couch
     }
 }
@@ -128,6 +153,7 @@ class Game extends JPanel
 /**
 TODO
 
+ rotation via keyboard
 collision checking
 air resistance
 cloud push down
@@ -136,4 +162,6 @@ cloud texture
 ground texture
 points
 FPS selector
+ procedural cloud generation
+ coins to grab
 */
