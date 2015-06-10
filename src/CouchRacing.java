@@ -1,5 +1,9 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.*;
 import javax.imageio.ImageIO;
@@ -42,6 +46,11 @@ class Game extends JPanel
     {
         this.frame = createFrame(SCREENSIZE[0], SCREENSIZE[1]);
         couch = new Couch(new Point2D.Double(0, 0)); // create the couch
+
+		// setup keyboard input
+		KeyListener keyListener = new KeyListenerMotion(0.05, couch);
+		this.frame.addKeyListener(keyListener);
+		this.frame.setFocusable(true);
 		
 		// set an image for the couch
 		BufferedImage couchImage;
@@ -110,23 +119,31 @@ class Game extends JPanel
 		int xPos = frame.getWidth()/2;
 		int yPos = frame.getHeight()/2;
 		double scale = 0.1;
-
-		//System.out.println(couch.image);
-
 		int width = 0;
 		int height = 0;
-
 		try {
-			width = (int) (couch.image.getWidth(null) * scale);
-			height = (int) (couch.image.getHeight(null) * scale);
-			g2d.drawImage(couch.image, xPos, yPos, width, height, null);
+			//width = (int) (couch.image.getWidth(null) * scale);
+			//height = (int) (couch.image.getHeight(null) * scale);
+
+			// rotate the image
+			// https://stackoverflow.com/questions/4918482/rotating-bufferedimage-instances
+			// note that transformations are in reversed order
+			AffineTransform xform = new AffineTransform();
+			xform.translate(couch.image.getWidth() / 2, couch.image.getHeight() / 2); // move transform to centre of component
+			xform.rotate(-couch.angle); // do the rotation; default is clockwise, we want counterclockwise
+			xform.scale(scale, scale);
+			xform.translate(-couch.image.getWidth() / 2, -couch.image.getHeight() / 2); // move to centre of object so it rotates around its centre
+
+			g2d.drawImage(couch.image, xform, null);
+
+			//g2d.drawImage(couch.image, xPos, yPos, width, height, null);
 		} catch (NullPointerException e) {
 			System.out.println("Couch image not found!");
 			g2d.fillRect(xPos, yPos, 30, 30);
 		}
 
-		System.out.println("Round done");
 
+		// render clouds
 		for (Cloud cloud : clouds) {
 			int cloudxPos = (int)(frame.getWidth()/2 + cloud.pos.getX() - couch.pos.getX());
 			int cloudyPos = (int)(frame.getHeight()/2 + cloud.pos.getY() - couch.pos.getY());
@@ -140,14 +157,38 @@ class Game extends JPanel
 			}
 		}
 
-		/*for (Cloud cloud : clouds) {
-			//g2d.fillOval((int)(frame.getWidth()/2 + cloud.pos.getX() - couch.pos.getX()), (int)(frame.getHeight()/2 + cloud.pos.getY() - couch.pos.getY()), 40, 20);
-			int cloudxPos = (int)(frame.getWidth()/2 + cloud.pos.getX() - couch.pos.getX());
-			int cloudyPos = (int)(frame.getHeight()/2 + cloud.pos.getY() - couch.pos.getY());
-			g2d.drawImage(cloud.image, cloudxPos, cloudyPos, null);
-		}*/
-        // for object in objectList, render object with offset to couch
+		System.out.println("Round done");
     }
+}
+
+// gets keyboard input for rotation and rotates the couch
+class KeyListenerMotion extends KeyAdapter
+{
+	private Component component;
+	private double deltaAngle;
+	private Couch couch;
+
+	public KeyListenerMotion(double deltaAngle, Couch couch)
+	{
+		this.deltaAngle = deltaAngle;
+		this.couch = couch;
+	}
+
+	public void rotate(double deltaAngle)
+	{
+		couch.rotate(deltaAngle);
+	}
+
+	public void keyPressed(KeyEvent e)
+	{
+		if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+			this.rotate(this.deltaAngle);
+		}
+		else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+			this.rotate(-this.deltaAngle);
+		}
+	}
+
 }
 
 /**
@@ -164,4 +205,5 @@ points
 FPS selector
  procedural cloud generation
  coins to grab
+ adjustable FPS
 */
