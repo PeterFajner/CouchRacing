@@ -4,9 +4,9 @@ import java.awt.image.BufferedImage;
 /**
  * Created by Peter on 2015-06-11.
  */
-public class Booster extends GameObject
+public class SideBooster extends GameObject
 {
-    public Booster(Point2D pos, BufferedImage image, double scale)
+    public SideBooster(Point2D pos, BufferedImage image, double scale)
     {
         super(pos, image, scale);
     }
@@ -14,6 +14,6 @@ public class Booster extends GameObject
     @Override
     public void collideWithCouch(Couch couch)
     {
-        couch.applyForce(new Vector2(0, -50)); // slow the couch's horizontal velocity
+        couch.applyForce(new Vector2(50, 0)); // slow the couch's horizontal velocity
     }
 }

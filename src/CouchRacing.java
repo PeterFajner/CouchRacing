@@ -5,7 +5,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import java.lang.reflect.Array;
+import java.text.DecimalFormat;
 import java.util.*;
 import javax.imageio.ImageIO;
 import java.io.*;
@@ -18,7 +18,6 @@ public class CouchRacing {
     public static void main(String[] args)
     {
         Game game = new Game();
-        game.gameLoop();
     }
 }
 
@@ -33,11 +32,19 @@ class Game extends JPanel
 	final int GROUNDLEVEL = 500;
 	final int CLOUDFREQ = 1;
 	final int BOOSTERFREQ = 2;
+	final int SIDEBOOSTERFREQ = 2;
+	final double COUCHSCALE = 0.3;
+	final double CLOUDSCALE = 0.3;
+	final double BOOSTERSCALE = 0.3;
+	final double SIDEBOOSTERSCALE = 0.3;
 	final String res = "../resources/";
 
 	int height = 0;
 	int maxHeight = 0;
 	int distance = 0;
+	double speed = 0;
+
+	DecimalFormat df = new DecimalFormat("#.##");
 
     JFrame createFrame(int width, int height)
     {
@@ -51,6 +58,7 @@ class Game extends JPanel
 
     public Game()
     {
+		// create window
         this.frame = createFrame(SCREENSIZE[0], SCREENSIZE[1]);
 
 		// set an image for the couch
@@ -64,33 +72,13 @@ class Game extends JPanel
             e.printStackTrace();
 		}
 		// create the couch
-		couch = new Couch(new Point2D.Double(0, GROUNDLEVEL - 5), couchImage, Math.PI/5);
+		couch = new Couch(new Point2D.Double(0, GROUNDLEVEL - 5), couchImage, COUCHSCALE, Math.PI/5);
 		couch.applyForce(new Vector2(1000, -700)); // apply initial slingshot force
 
 		// setup keyboard input
 		KeyListener keyListener = new KeyListenerMotion(0.05, couch);
 		this.frame.addKeyListener(keyListener);
 		this.frame.setFocusable(true);
-    }
-	
-	public Cloud createCloud(Point2D centre, int radius, BufferedImage image)
-	{
-		Random r = new Random();
-		int x = r.nextInt(2*radius) - radius + (int)centre.getX();
-		int y = r.nextInt(2*radius) - radius + (int)centre.getY();
-		return new Cloud(new Point2D.Double(x, y), image);
-	}
-
-	public Booster createBooster(Point2D centre, int radius, BufferedImage image)
-	{
-		Random r = new Random();
-		int x = r.nextInt(2*radius) - radius + (int)centre.getX();
-		int y = r.nextInt(2*radius) - radius + (int)centre.getY();
-		return new Booster(new Point2D.Double(x, y), image);
-	}
-	
-    public void gameLoop() {
-
 
 		// load cloud image
 		BufferedImage cloudImage = null;
@@ -109,10 +97,18 @@ class Game extends JPanel
 			//System.out.println("How can boosters be real if their textures aren't real?");
 			e.printStackTrace();
 		}
-		
+
+		// load side booster image
+		BufferedImage sideBoosterImage = null;
+		try {
+			sideBoosterImage = ImageIO.read(getClass().getResource("sidebooster.png"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		// main loop
-        try {
-            while (true) {
+		try {
+			while (true) {
 
 				// clear list of active objects
 				activeEnvironment = new ArrayList<Sector>();
@@ -141,6 +137,10 @@ class Game extends JPanel
 								Booster booster = createBooster(new Point2D.Double(1000 * (int) (x / 1000), 1000 * (int) (y / 1000)), 500, boosterImage); // round coords to nearest 1000
 								newObjects.add(booster);
 							}
+							for (int i = 0; i < SIDEBOOSTERFREQ; i++) {
+								SideBooster sideBooster = createSideBooster(new Point2D.Double(1000 * (int) (x / 1000), 1000 * (int) (y / 1000)), 500, sideBoosterImage); // round coords to nearest 1000
+								newObjects.add(sideBooster);
+							}
 							Sector newSector = new Sector((int)(x/1000), (int)(y/1000), newObjects);
 							activeEnvironment.add(newSector);
 							environment.add(newSector);
@@ -149,7 +149,7 @@ class Game extends JPanel
 				}
 
 
-                couch.applyForce(new Vector2(0, 3)); // apply gravity
+				couch.applyForce(new Vector2(0, 3)); // apply gravity
 
 				// check for collisions
 				GameObject collided = getFirstCollison(couch, activeEnvironment);
@@ -169,32 +169,58 @@ class Game extends JPanel
 					this.maxHeight = this.height;
 				}
 				this.distance = (int)couch.pos.getX();
+				this.speed = couch.velocity.getMagnitude();
 
 				// paint screen
-                this.repaint();
+				this.repaint();
 
 				// sleep
-                Thread.sleep(10);
+				Thread.sleep(10);
 
 				// check if couch hit the ground
 				if (couch.pos.getY() > GROUNDLEVEL) {
 					break;
 				}
-            }
-        }
-		// why do I need to do this
-        catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+			}
+		}
+		// prevents an exception when the window is closed
+		catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
     }
+	
+	public Cloud createCloud(Point2D centre, int radius, BufferedImage image)
+	{
+		Random r = new Random();
+		int x = r.nextInt(2*radius) - radius + (int)centre.getX();
+		int y = r.nextInt(2*radius) - radius + (int)centre.getY();
+		return new Cloud(new Point2D.Double(x, y), image, CLOUDSCALE);
+	}
 
-	// gets the first collision with the couch and something else
+	public Booster createBooster(Point2D centre, int radius, BufferedImage image)
+	{
+		Random r = new Random();
+		int x = r.nextInt(2*radius) - radius + (int)centre.getX();
+		int y = r.nextInt(2*radius) - radius + (int)centre.getY();
+		return new Booster(new Point2D.Double(x, y), image, BOOSTERSCALE);
+	}
+
+	public SideBooster createSideBooster(Point2D centre, int radius, BufferedImage image)
+	{
+		Random r = new Random();
+		int x = r.nextInt(2*radius) - radius + (int)centre.getX();
+		int y = r.nextInt(2*radius) - radius + (int)centre.getY();
+		return new SideBooster(new Point2D.Double(x, y), image, SIDEBOOSTERSCALE);
+	}
+
+	// gets the first collision between the couch and something else
 	GameObject getFirstCollison(Couch couch, ArrayList<Sector> sectors)
 	{
 		for (Sector sector : sectors) {
 			for (GameObject obj : sector.gameObjects) {
-				if (couch.pos.distanceSq(obj.pos) < Math.pow(80, 2)) {
-					System.out.println("Collided with " + obj); // DEBUG
+				Point2D centrePos = new Point2D.Double(obj.pos.getX() + obj.image.getWidth() * obj.scale / 2, obj.pos.getY() + obj.image.getHeight() * obj.scale / 2);
+				if (couch.pos.distanceSq(centrePos) < Math.pow(70, 2)) {
+					//System.out.println("Collided with " + obj); // DEBUG
 					return obj;
 				}
 			}
@@ -244,9 +270,8 @@ class Game extends JPanel
 				for (GameObject obj : sector.gameObjects) {
 					int cloudxPos = (int) (frame.getWidth() / 2 + obj.pos.getX() - couch.pos.getX());
 					int cloudyPos = (int) (frame.getHeight() / 2 + obj.pos.getY() - couch.pos.getY());
-					double cloudScale = 0.3;
-					int cloudWidth = (int) (obj.image.getWidth(null) * cloudScale);
-					int cloudHeight = (int) (obj.image.getHeight(null) * cloudScale);
+					int cloudWidth = (int) (obj.image.getWidth(null) * obj.scale);
+					int cloudHeight = (int) (obj.image.getHeight(null) * obj.scale);
 					try {
 						g2d.drawImage(obj.image, cloudxPos, cloudyPos, cloudWidth, cloudHeight, null);
 					} catch (NullPointerException e) {
@@ -260,7 +285,7 @@ class Game extends JPanel
 
 		// render ground
 		try {
-			int groundyPos = (int) (frame.getHeight() / 2 + GROUNDLEVEL - couch.pos.getY() + couch.image.getHeight()/7);
+			int groundyPos = (int) (frame.getHeight() / 2 + GROUNDLEVEL - couch.pos.getY() + couch.image.getHeight()/2 * couch.scale);
 			g2d.setColor(new Color(0.3372549f, 0.5019608f, 0.1764706f));
 			g2d.fillRect(0, groundyPos, frame.getBounds().width, 1000);
 		} catch (NullPointerException e) {
@@ -271,6 +296,7 @@ class Game extends JPanel
 		g2d.drawString("Distance: "+distance/100, this.frame.getBounds().width - 150, 20);
 		g2d.drawString("Height: "+height/100, this.frame.getBounds().width - 150, 40);
 		g2d.drawString("Max Height: "+maxHeight/100, this.frame.getBounds().width - 150, 60);
+		g2d.drawString("Speed: "+df.format(speed), this.frame.getBounds().width - 150, 80);
 
 		//System.out.println("Round done"); // DEBUG
     }
@@ -332,4 +358,7 @@ TODO
  comment
  adjust aerodynamicity
  X change ground colour
+ adjust hitboxes
+ background?
+ set final speed to 0
 */

@@ -23,7 +23,7 @@ public class Vector2
 
     public double getAngle()
     {
-        // each tangent can represent two opposite angles, meaning that we have to find the right one by checking the signs on the x and y values
+        // the game's coordinate grid has a flipped y-axis, so the principal angle must be calculated and then changed based on which quadrant the angle is in
         double referenceAngle = Math.atan2(Math.abs(this.y), Math.abs(this.x));
         double angle = 0;
         if (Math.signum(this.x) < 0) {

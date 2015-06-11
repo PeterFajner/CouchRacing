@@ -8,11 +8,13 @@ public class GameObject
 {
     public Point2D pos = new Point2D.Double(0, 0);
     BufferedImage image = null;
+    double scale = 1;
 
-    public GameObject(Point2D pos, BufferedImage image)
+    public GameObject(Point2D pos, BufferedImage image, double scale)
     {
         this.pos = pos;
         this.image = image;
+        this.scale = scale;
     }
 
     public void collideWithCouch(Couch couch) {}

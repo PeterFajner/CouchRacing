@@ -14,14 +14,14 @@ public class Couch extends GameObject
     Vector2 totalForce;
     Vector2 velocity;
 
-    public Couch(Point2D pos, BufferedImage image, double angle)
+    public Couch(Point2D pos, BufferedImage image, double scale, double angle)
     {
-        super(pos, image);
+        super(pos, image, scale);
         this.angle = angle;
         this.totalForce = new Vector2(0, 0);
         this.velocity = new Vector2(0,0);
         this.mass = 80;
-        this.liftCoefficient = 0.8;
+        this.liftCoefficient = 1;
         this.dragCoefficient = 0.2;
         this.idealAOA = 0.01; // a little under 6°, couches aren't aerodynamic
     }
