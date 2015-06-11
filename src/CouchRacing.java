@@ -5,6 +5,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.lang.reflect.Array;
 import java.util.*;
 import javax.imageio.ImageIO;
 import java.io.*;
@@ -25,9 +26,12 @@ class Game extends JPanel
 {
     JFrame frame;
     Couch couch;
-	ArrayList<GameObject> interactiveEnvironment = new ArrayList<GameObject>();
-	ArrayList<CloudSector> clouds = new ArrayList<CloudSector>();
-	ArrayList<CloudSector> renderedClouds = new ArrayList<CloudSector>();
+	//ArrayList<CloudSector> clouds = new ArrayList<CloudSector>();
+	//ArrayList<CloudSector> renderedClouds = new ArrayList<CloudSector>();
+	//ArrayList<BoosterSector> boosters = new ArrayList<BoosterSector>();
+	//ArrayList<BoosterSector> renderedBoosters = new ArrayList<BoosterSector>();
+	ArrayList<Sector> environment = new ArrayList<Sector>();
+	ArrayList<Sector> activeEnvironment = new ArrayList<Sector>();
 	
 	final int[] SCREENSIZE = new int[]{1200, 800};
 	final int GROUNDLEVEL = 500;
@@ -74,6 +78,14 @@ class Game extends JPanel
 		int y = r.nextInt(2*radius) - radius + (int)centre.getY();
 		return new Cloud(new Point2D.Double(x, y), image);
 	}
+
+	public Booster createBooster(Point2D centre, int radius, BufferedImage image)
+	{
+		Random r = new Random();
+		int x = r.nextInt(2*radius) - radius + (int)centre.getX();
+		int y = r.nextInt(2*radius) - radius + (int)centre.getY();
+		return new Booster(new Point2D.Double(x, y), image);
+	}
 	
     public void gameLoop() {
 
@@ -82,57 +94,56 @@ class Game extends JPanel
 		// load cloud image
 		BufferedImage cloudImage = null;
 		try {
-			cloudImage = ImageIO.read(getClass().getResource("clouds3.png"));
+			cloudImage = ImageIO.read(getClass().getResource("cloud.png"));
 		} catch (IOException e) {
 			//System.out.println("How can clouds be real if their textures aren't real?");
 			e.printStackTrace();
 		}
 
-		/*
-		// create some clouds
-		for (int i = 0; i < 25; i++) {
-			Cloud cloud = createCloud(new int[]{-3000, 3000}, new int[]{-1000, 1000}, cloudImage);
-			clouds.add(cloud);
-			interactiveEnvironment.add(cloud);
+		// load booster image
+		BufferedImage boosterImage = null;
+		try {
+			boosterImage = ImageIO.read(getClass().getResource("booster.png"));
+		} catch (IOException e) {
+			//System.out.println("How can clouds be real if their textures aren't real?");
+			e.printStackTrace();
 		}
-		*/
-
-		// the coordinates of various cloud sectors, might be faster than iterating the clouds list
-		//ArrayList<int[]> existingCloudSectorCoordinates = new ArrayList<int[]>();
 		
 		// main loop
         try {
             while (true) {
 
-				// clear list of clouds to be rendered
-				renderedClouds = new ArrayList<CloudSector>();
+				// clear list of active objects
+				activeEnvironment = new ArrayList<Sector>();
 				// check nine sectors around couch to see if need to generate more clouds
 				// additionally, assign the nearby sectors to be rendered
 				for (double x : new double[]{couch.pos.getX() + 1000, couch.pos.getX() - 1000, couch.pos.getX()}) {
 					for (double y : new double[]{couch.pos.getY() + 1000, couch.pos.getY() - 1000, couch.pos.getY()}) {
+						// check sector
 						boolean sectorIsPopulated = false;
-						for (CloudSector sector : clouds) {
+						for (Sector sector : environment) {
 							if (sector.x == (int)(x/1000.0) && sector.y == (int)(y/1000.0)) {
 								sectorIsPopulated = true;
-								renderedClouds.add(sector);
+								activeEnvironment.add(sector);
+								environment.add(sector);
 								break;
 							}
 						}
 						if (!sectorIsPopulated) {
 							// this executes when the nearby sector does not have clouds
-							ArrayList<Cloud> newClouds = new ArrayList<Cloud>();
-							for (int i = 0; i < 10; i++) {
+							ArrayList<GameObject> newObjects = new ArrayList<GameObject>();
+							for (int i = 0; i < 2; i++) {
 								Cloud cloud = createCloud(new Point2D.Double(1000*(int)(x/1000), 1000*(int)(y/1000)), 500, cloudImage); // round coords to nearest 1000
-								newClouds.add(cloud);
-								CloudSector thisSector = new CloudSector((int)(x/1000), (int)(y/1000), newClouds);
-								clouds.add(thisSector);
-								renderedClouds.add(thisSector);
-								//existingCloudSectorCoordinates.add(new int[]{x, y});
-
+								newObjects.add(cloud);
 							}
+							for (int i = 0; i < 2; i++) {
+								Booster booster = createBooster(new Point2D.Double(1000 * (int) (x / 1000), 1000 * (int) (y / 1000)), 500, boosterImage); // round coords to nearest 1000
+								newObjects.add(booster);
+							}
+							Sector newSector = new Sector((int)(x/1000), (int)(y/1000), newObjects);
+							activeEnvironment.add(newSector);
+							environment.add(newSector);
 						}
-						// this always executes, the sector should be populated at this point
-						// set which clouds will be rendered
 					}
 				}
 
@@ -140,7 +151,7 @@ class Game extends JPanel
                 couch.applyForce(new Vector2(0, 3)); // apply gravity
 
 				// check for collisions
-				GameObject collided = getFirstCollison(couch, interactiveEnvironment);
+				GameObject collided = getFirstCollison(couch, activeEnvironment);
 				if (collided != null) {
 					collided.collideWithCouch(couch); // pass the collision on to the object
 				}
@@ -166,12 +177,14 @@ class Game extends JPanel
     }
 
 	// gets the first collision with the couch and something else
-	GameObject getFirstCollison(Couch couch, ArrayList<GameObject> gameObjects)
+	GameObject getFirstCollison(Couch couch, ArrayList<Sector> sectors)
 	{
-		for (GameObject obj : gameObjects) {
-			if (couch.pos.distanceSq(obj.pos) < Math.pow(50, 2)) {
-				System.out.println("Collided with " + obj); // DEBUG
-				return obj;
+		for (Sector sector : sectors) {
+			for (GameObject obj : sector.gameObjects) {
+				if (couch.pos.distanceSq(obj.pos) < Math.pow(50, 2)) {
+					System.out.println("Collided with " + obj); // DEBUG
+					return obj;
+				}
 			}
 		}
 		return null;
@@ -187,7 +200,7 @@ class Game extends JPanel
 		// render couch in middle of screen
 		int xPos = frame.getWidth()/2;
 		int yPos = frame.getHeight()/2;
-		double scale = 0.1;
+		double scale = 0.3;
 		int width = 0;
 		int height = 0;
 		try {
@@ -212,17 +225,17 @@ class Game extends JPanel
 		}
 
 
-		// render clouds
+		// render active environment
 		try {
-			for (CloudSector sector : clouds) {
-				for (Cloud cloud : sector.clouds) {
-					int cloudxPos = (int) (frame.getWidth() / 2 + cloud.pos.getX() - couch.pos.getX());
-					int cloudyPos = (int) (frame.getHeight() / 2 + cloud.pos.getY() - couch.pos.getY());
+			for (Sector sector : activeEnvironment) {
+				for (GameObject obj : sector.gameObjects) {
+					int cloudxPos = (int) (frame.getWidth() / 2 + obj.pos.getX() - couch.pos.getX());
+					int cloudyPos = (int) (frame.getHeight() / 2 + obj.pos.getY() - couch.pos.getY());
 					double cloudScale = 0.3;
-					int cloudWidth = (int) (cloud.image.getWidth(null) * cloudScale);
-					int cloudHeight = (int) (cloud.image.getHeight(null) * cloudScale);
+					int cloudWidth = (int) (obj.image.getWidth(null) * cloudScale);
+					int cloudHeight = (int) (obj.image.getHeight(null) * cloudScale);
 					try {
-						g2d.drawImage(cloud.image, cloudxPos, cloudyPos, cloudWidth, cloudHeight, null);
+						g2d.drawImage(obj.image, cloudxPos, cloudyPos, cloudWidth, cloudHeight, null);
 					} catch (NullPointerException e) {
 						g2d.fillOval(cloudxPos, cloudyPos, 40, 20);
 					}
@@ -236,7 +249,7 @@ class Game extends JPanel
 		try {
 			int groundyPos = (int) (frame.getHeight() / 2 + GROUNDLEVEL - couch.pos.getY());
 			g2d.setColor(Color.GREEN);
-			g2d.fillRect(0, groundyPos, frame.getBounds().width, 250);
+			g2d.fillRect(0, groundyPos, frame.getBounds().width, 1000);
 		} catch (NullPointerException e) {
 			// this just means the couch hasn't loaded yet
 		}
@@ -279,18 +292,25 @@ TODO
 
  X rotation via keyboard
  X collision checking
-air resistance / aerodynamics
+ X air resistance / aerodynamics
  X cloud push down
- procedural clouds
- procedural ground
+ X procedural clouds
+ X procedural ground
 air draft push up
-cloud texture
+ fix collision
+ create unified sector class
+X cloud texture
 ground texture
 points
 FPS selector
- procedural cloud generation
- coins to grab
- adjustable FPS
+ - coins to grab
+ make things constants
+ adjust FPS
  starting elastic firing
+ max distance
+ max height
  planning evidence
+ reorganize
+ comment
+ change ground colour
 */
