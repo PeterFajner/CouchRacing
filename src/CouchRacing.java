@@ -193,7 +193,7 @@ class Game extends JPanel
 	{
 		for (Sector sector : sectors) {
 			for (GameObject obj : sector.gameObjects) {
-				if (couch.pos.distanceSq(obj.pos) < Math.pow(50, 2)) {
+				if (couch.pos.distanceSq(obj.pos) < Math.pow(80, 2)) {
 					System.out.println("Collided with " + obj); // DEBUG
 					return obj;
 				}
@@ -268,9 +268,9 @@ class Game extends JPanel
 		}
 
 		// render statistics
-		g2d.drawString("Distance: "+distance, this.frame.getBounds().width - 150, 20);
-		g2d.drawString("Height: "+height, this.frame.getBounds().width - 150, 40);
-		g2d.drawString("Max Height: "+maxHeight, this.frame.getBounds().width - 150, 60);
+		g2d.drawString("Distance: "+distance/100, this.frame.getBounds().width - 150, 20);
+		g2d.drawString("Height: "+height/100, this.frame.getBounds().width - 150, 40);
+		g2d.drawString("Max Height: "+maxHeight/100, this.frame.getBounds().width - 150, 60);
 
 		//System.out.println("Round done"); // DEBUG
     }

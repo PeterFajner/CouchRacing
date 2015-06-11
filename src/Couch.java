@@ -20,9 +20,9 @@ public class Couch extends GameObject
         this.angle = angle;
         this.totalForce = new Vector2(0, 0);
         this.velocity = new Vector2(0,0);
-        this.mass = 100;
-        this.liftCoefficient = 1;
-        this.dragCoefficient = 0.3;
+        this.mass = 80;
+        this.liftCoefficient = 0.8;
+        this.dragCoefficient = 0.2;
         this.idealAOA = 0.01; // a little under 6°, couches aren't aerodynamic
     }
 	
