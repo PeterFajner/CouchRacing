@@ -22,7 +22,6 @@ public class Aerodynamics {
         // apply drag
         double dragMagnitude = velocityMagnitude * velocityMagnitude * couch.dragCoefficient * Math.abs(Math.sin(angleDelta)); // drag increases quadratically with speed, deal with it
         Vector2 dragForce = new Vector2(Vector2Tools.getAngle(couch.velocity) + Math.PI, dragMagnitude, true);
-        System.out.println(dragMagnitude);
         couch.applyForce(dragForce);
 
         //System.out.println(Vector2Tools.getAngle(couch.velocity)); // DEBUG

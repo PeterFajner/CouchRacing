@@ -26,16 +26,18 @@ class Game extends JPanel
 {
     JFrame frame;
     Couch couch;
-	//ArrayList<CloudSector> clouds = new ArrayList<CloudSector>();
-	//ArrayList<CloudSector> renderedClouds = new ArrayList<CloudSector>();
-	//ArrayList<BoosterSector> boosters = new ArrayList<BoosterSector>();
-	//ArrayList<BoosterSector> renderedBoosters = new ArrayList<BoosterSector>();
 	ArrayList<Sector> environment = new ArrayList<Sector>();
 	ArrayList<Sector> activeEnvironment = new ArrayList<Sector>();
 	
 	final int[] SCREENSIZE = new int[]{1200, 800};
 	final int GROUNDLEVEL = 500;
+	final int CLOUDFREQ = 1;
+	final int BOOSTERFREQ = 2;
 	final String res = "../resources/";
+
+	int height = 0;
+	int maxHeight = 0;
+	int distance = 0;
 
     JFrame createFrame(int width, int height)
     {
@@ -51,8 +53,6 @@ class Game extends JPanel
     {
         this.frame = createFrame(SCREENSIZE[0], SCREENSIZE[1]);
 
-
-
 		// set an image for the couch
 		BufferedImage couchImage = null;
 		try {
@@ -63,7 +63,9 @@ class Game extends JPanel
 			//System.out.println("How can the couch be real if its image isn't real?");
             e.printStackTrace();
 		}
-		couch = new Couch(new Point2D.Double(0, 0), couchImage); // create the couch
+		// create the couch
+		couch = new Couch(new Point2D.Double(0, GROUNDLEVEL - 5), couchImage, Math.PI/5);
+		couch.applyForce(new Vector2(1000, -700)); // apply initial slingshot force
 
 		// setup keyboard input
 		KeyListener keyListener = new KeyListenerMotion(0.05, couch);
@@ -89,7 +91,6 @@ class Game extends JPanel
 	
     public void gameLoop() {
 
-        couch.applyForce(new Vector2(100, -500)); // apply initial slingshot force; initially hardcoded
 
 		// load cloud image
 		BufferedImage cloudImage = null;
@@ -105,7 +106,7 @@ class Game extends JPanel
 		try {
 			boosterImage = ImageIO.read(getClass().getResource("booster.png"));
 		} catch (IOException e) {
-			//System.out.println("How can clouds be real if their textures aren't real?");
+			//System.out.println("How can boosters be real if their textures aren't real?");
 			e.printStackTrace();
 		}
 		
@@ -132,11 +133,11 @@ class Game extends JPanel
 						if (!sectorIsPopulated) {
 							// this executes when the nearby sector does not have clouds
 							ArrayList<GameObject> newObjects = new ArrayList<GameObject>();
-							for (int i = 0; i < 2; i++) {
+							for (int i = 0; i < CLOUDFREQ; i++) {
 								Cloud cloud = createCloud(new Point2D.Double(1000*(int)(x/1000), 1000*(int)(y/1000)), 500, cloudImage); // round coords to nearest 1000
 								newObjects.add(cloud);
 							}
-							for (int i = 0; i < 2; i++) {
+							for (int i = 0; i < BOOSTERFREQ; i++) {
 								Booster booster = createBooster(new Point2D.Double(1000 * (int) (x / 1000), 1000 * (int) (y / 1000)), 500, boosterImage); // round coords to nearest 1000
 								newObjects.add(booster);
 							}
@@ -159,9 +160,20 @@ class Game extends JPanel
 				// apply aerodynamics (lift and drag)
 				Aerodynamics.applyAerodynamics(couch);
 
+				// update velocity and position
 				couch.update();
-				// System.out.println(couch.pos); // DEBUG
+
+				// update position display
+				this.height = (int)(GROUNDLEVEL - couch.pos.getY());
+				if (this.height > this.maxHeight) {
+					this.maxHeight = this.height;
+				}
+				this.distance = (int)couch.pos.getX();
+
+				// paint screen
                 this.repaint();
+
+				// sleep
                 Thread.sleep(10);
 
 				// check if couch hit the ground
@@ -201,8 +213,8 @@ class Game extends JPanel
 		int xPos = frame.getWidth()/2;
 		int yPos = frame.getHeight()/2;
 		double scale = 0.3;
-		int width = 0;
-		int height = 0;
+		//int width = 0;
+		//int height = 0;
 		try {
 			//width = (int) (couch.image.getWidth(null) * scale);
 			//height = (int) (couch.image.getHeight(null) * scale);
@@ -211,7 +223,8 @@ class Game extends JPanel
 			// https://stackoverflow.com/questions/4918482/rotating-bufferedimage-instances
 			// note that transformations are in reversed order
 			AffineTransform xform = new AffineTransform();
-			xform.translate(couch.image.getWidth() / 2, couch.image.getHeight() / 2); // move transform to centre of component
+			xform.translate(frame.getWidth()/2, frame.getHeight()/2);
+			//xform.translate(couch.image.getWidth() / 2, couch.image.getHeight() / 2); // move transform to centre of component
 			xform.rotate(-couch.angle); // do the rotation; default is clockwise, we want counterclockwise
 			xform.scale(scale, scale);
 			xform.translate(-couch.image.getWidth() / 2, -couch.image.getHeight() / 2); // move to centre of object so it rotates around its centre
@@ -247,12 +260,17 @@ class Game extends JPanel
 
 		// render ground
 		try {
-			int groundyPos = (int) (frame.getHeight() / 2 + GROUNDLEVEL - couch.pos.getY());
-			g2d.setColor(Color.GREEN);
+			int groundyPos = (int) (frame.getHeight() / 2 + GROUNDLEVEL - couch.pos.getY() + couch.image.getHeight()/7);
+			g2d.setColor(new Color(0.3372549f, 0.5019608f, 0.1764706f));
 			g2d.fillRect(0, groundyPos, frame.getBounds().width, 1000);
 		} catch (NullPointerException e) {
 			// this just means the couch hasn't loaded yet
 		}
+
+		// render statistics
+		g2d.drawString("Distance: "+distance, this.frame.getBounds().width - 150, 20);
+		g2d.drawString("Height: "+height, this.frame.getBounds().width - 150, 40);
+		g2d.drawString("Max Height: "+maxHeight, this.frame.getBounds().width - 150, 60);
 
 		//System.out.println("Round done"); // DEBUG
     }
@@ -296,21 +314,22 @@ TODO
  X cloud push down
  X procedural clouds
  X procedural ground
-air draft push up
- fix collision
- create unified sector class
-X cloud texture
-ground texture
-points
-FPS selector
+ X air draft push up
+ X fix collision
+ X create unified sector class
+ X cloud texture
+ X better ground texture
+ - points
+ - FPS selector
  - coins to grab
  make things constants
  adjust FPS
  starting elastic firing
- max distance
- max height
+ X max distance
+ X max height
  planning evidence
  reorganize
  comment
- change ground colour
+ adjust aerodynamicity
+ X change ground colour
 */

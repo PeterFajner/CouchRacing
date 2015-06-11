@@ -14,10 +14,10 @@ public class Couch extends GameObject
     Vector2 totalForce;
     Vector2 velocity;
 
-    public Couch(Point2D pos, BufferedImage image)
+    public Couch(Point2D pos, BufferedImage image, double angle)
     {
         super(pos, image);
-        this.angle = 0;
+        this.angle = angle;
         this.totalForce = new Vector2(0, 0);
         this.velocity = new Vector2(0,0);
         this.mass = 100;
