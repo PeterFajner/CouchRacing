@@ -4,28 +4,27 @@ import java.awt.geom.Point2D;
 import java.util.*;
 import java.awt.image.BufferedImage;
 
-public class Couch
+public class Couch extends GameObject
 {
-    public Point2D pos;
     public double angle; // angle counterclockwise from right horizontal, in radians
     public double mass;
+    public double liftCoefficient;
+    public double dragCoefficient;
+    public double idealAOA; // ideal angle of attack
     Vector2 totalForce;
     Vector2 velocity;
-	BufferedImage image = null;
 
-    public Couch(Point2D pos)
+    public Couch(Point2D pos, BufferedImage image)
     {
-        this.pos = pos;
+        super(pos, image);
         this.angle = 0;
         this.totalForce = new Vector2(0, 0);
         this.velocity = new Vector2(0,0);
         this.mass = 100;
+        this.liftCoefficient = 1;
+        this.dragCoefficient = 0.3;
+        this.idealAOA = 0.01; // a little under 6°, couches aren't aerodynamic
     }
-	
-	public Couch()
-	{
-		this(new Point2D.Double(10, 10));
-	}
 	
 	public void setImage(BufferedImage image)
 	{
@@ -35,6 +34,17 @@ public class Couch
     public void applyForce(Vector2 force)
     {
         this.totalForce.add(force);
+    }
+
+    /**
+     *
+     * @param angle the angle to rotate by in radians
+     * @return couch angle
+     */
+    public double rotate(double angle)
+    {
+        this.angle += angle;
+        return this.angle;
     }
 
     public void update()
