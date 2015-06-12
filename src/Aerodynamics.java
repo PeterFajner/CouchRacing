@@ -1,3 +1,15 @@
+/** =======================================================================
+ * Main Class:    CouchRacing      						Author: Peter Fajner
+ * Version:  001                                        Date:  2015-06-01
+ *
+ * Purpose   Final Project - Couch Racing
+ *
+ * Course:   Computer Science 202                Teacher:  Ms Jones
+ * School:   Sir Winston Churchill High School, Calgary, Alberta, Canada
+ * Language: Java SE 8.0    Target Operating System: Java Virtual Machine
+ * System:   Undefined running Undefined        IDE: IntelliJ IDEA
+ * ========================================================================*/
+
 /**
  * aerodynamics calculations for the couch
  */
@@ -20,7 +32,7 @@ public class Aerodynamics {
         couch.applyForce(liftForce);
 
         // apply drag
-        double dragMagnitude = velocityMagnitude * velocityMagnitude * couch.dragCoefficient * Math.abs(Math.sin(angleDelta)); // drag increases quadratically with speed, deal with it
+        double dragMagnitude = velocityMagnitude * velocityMagnitude * couch.dragCoefficient * Math.abs(Math.sin(angleDelta)); // drag increases quadratically with speed, ensures that there's a terminal velocity
         Vector2 dragForce = new Vector2(couch.velocity.getAngle() + Math.PI, dragMagnitude, true);
         couch.applyForce(dragForce);
 

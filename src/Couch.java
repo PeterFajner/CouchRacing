@@ -1,3 +1,14 @@
+/** =======================================================================
+ * Main Class:    CouchRacing      						Author: Peter Fajner
+ * Version:  001                                        Date:  2015-06-01
+ *
+ * Purpose   Final Project - Couch Racing
+ *
+ * Course:   Computer Science 202                Teacher:  Ms Jones
+ * School:   Sir Winston Churchill High School, Calgary, Alberta, Canada
+ * Language: Java SE 8.0    Target Operating System: Java Virtual Machine
+ * System:   Undefined running Undefined        IDE: IntelliJ IDEA
+ * ========================================================================*/
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Point2D;

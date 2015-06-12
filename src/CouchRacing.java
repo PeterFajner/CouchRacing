@@ -1,3 +1,15 @@
+/** =======================================================================
+ * Main Class:    CouchRacing      						Author: Peter Fajner
+ * Version:  001                                        Date:  2015-06-01
+ *
+ * Purpose   Final Project - Couch Racing
+ *
+ * Course:   Computer Science 202                Teacher:  Ms Jones
+ * School:   Sir Winston Churchill High School, Calgary, Alberta, Canada
+ * Language: Java SE 8.0    Target Operating System: Java Virtual Machine
+ * System:   Undefined running Undefined        IDE: IntelliJ IDEA
+ * ========================================================================*/
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
@@ -39,13 +51,14 @@ class Game extends JPanel
 	final double BOOSTERSCALE = 0.3;
 	final double SIDEBOOSTERSCALE = 0.3;
 	final double COLLIDERRADIUS = 80; // distance between two objects, in pixels, before they "collide"
-	//final String res = "../resources/";
 
+	// output label value holders
 	int height = 0;
 	int maxHeight = 0;
 	int distance = 0;
 	double speed = 0;
 
+	// decimal format for the speed output
 	DecimalFormat df = new DecimalFormat("#.##");
 
 	/**
@@ -64,6 +77,9 @@ class Game extends JPanel
         return frame;
     }
 
+	/**
+	 * the constructor and main game loop
+	 */
     public Game()
     {
 		// create window
