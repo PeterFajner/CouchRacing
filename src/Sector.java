@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 
 /**
- * Created by Peter on 2015-06-11.
+ * represents a collection of GameObjects within a particular 1000x1000 pixel area
  */
 public class Sector
 {

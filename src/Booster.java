@@ -2,7 +2,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
 /**
- * Created by Peter on 2015-06-11.
+ * boosts the couch vertically
  */
 public class Booster extends GameObject
 {

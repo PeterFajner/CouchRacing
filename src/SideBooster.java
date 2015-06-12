@@ -2,7 +2,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
 /**
- * Created by Peter on 2015-06-11.
+ * this boosts the couch to the right
  */
 public class SideBooster extends GameObject
 {

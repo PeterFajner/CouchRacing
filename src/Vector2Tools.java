@@ -1,5 +1,7 @@
+
 /**
- * Created by Peter on 2015-06-01.
+ * methods for working with Vector2 objects
+ * many of these are identical to those in the Vector2 class but return a new Vector2 rather than operating on an existing one
  */
 public class Vector2Tools {
 

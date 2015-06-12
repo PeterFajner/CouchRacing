@@ -2,7 +2,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
 /**
- * Created by Peter on 2015-06-10.
+ * represents an object in the game world with a position, image, and image scale
  */
 public class GameObject
 {
@@ -17,5 +17,9 @@ public class GameObject
         this.scale = scale;
     }
 
+    /**
+     * called when the object collides with the couch
+     * @param couch the couch
+     */
     public void collideWithCouch(Couch couch) {}
 }
